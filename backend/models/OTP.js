@@ -5,15 +5,15 @@ const otpSchema=new Schema({
     user:{
         type:Schema.Types.ObjectId,
         ref:"User",
-        required:true
+        required:false
     },
     otp:{
         type:String,
-        required:true
+        required:false
     },
     expiresAt:{
         type:Date,
-        required:true
+        required:false
     },
 })
 
