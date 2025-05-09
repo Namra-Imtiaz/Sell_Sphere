@@ -15,11 +15,8 @@ import CachedOutlinedIcon from '@mui/icons-material/CachedOutlined';
 import Favorite from '@mui/icons-material/Favorite'
 import { createWishlistItemAsync, deleteWishlistItemByIdAsync, resetWishlistItemAddStatus, resetWishlistItemDeleteStatus, selectWishlistItemAddStatus, selectWishlistItemDeleteStatus, selectWishlistItems } from '../../wishlist/WishlistSlice'
 import { useTheme } from '@mui/material'
-import KeyboardArrowLeft from '@mui/icons-material/KeyboardArrowLeft';
-import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
 import SwipeableViews from 'react-swipeable-views';
 import { autoPlay } from 'react-swipeable-views-utils';
-import MobileStepper from '@mui/material/MobileStepper';
 import Lottie from 'lottie-react'
 import { loadingAnimation } from '../../../assets'
 
@@ -32,8 +29,6 @@ const sageGreen = {
   contrastText: '#ffffff',
 }
 
-const SIZES = ['XS', 'S', 'M', 'L', 'XL']
-const COLORS = ['#020202', '#F6F6F6', '#B82222', '#BEA9A9', '#E2BB8D']
 const AutoPlaySwipeableViews = autoPlay(SwipeableViews);
 
 export const ProductDetails = () => {
@@ -44,9 +39,6 @@ export const ProductDetails = () => {
     const cartItems = useSelector(selectCartItems)
     const cartItemAddStatus = useSelector(selectCartItemAddStatus)
     const [quantity, setQuantity] = useState(1)
-    const [selectedSize, setSelectedSize] = useState('')
-    const [selectedColorIndex, setSelectedColorIndex] = useState(-1)
-    const reviews = useSelector(selectReviews)
     const [selectedImageIndex, setSelectedImageIndex] = useState(0)
     const theme = useTheme()
     const is1420 = useMediaQuery(theme.breakpoints.down(1420))
@@ -65,6 +57,7 @@ export const ProductDetails = () => {
     const productFetchStatus = useSelector(selectProductFetchStatus)
     const reviewFetchStatus = useSelector(selectReviewFetchStatus)
 
+    const reviews = useSelector(selectReviews)
     const totalReviewRating = reviews.reduce((acc, review) => acc + review.rating, 0)
     const totalReviews = reviews.length
     const averageRating = parseInt(Math.ceil(totalReviewRating / totalReviews))
@@ -155,10 +148,6 @@ export const ProductDetails = () => {
         }
     }
 
-    const handleSizeSelect = (size) => {
-        setSelectedSize(size)
-    }
-
     const handleAddRemoveFromWishlist = (e) => {
         if(e.target.checked) {
             const data = { user: loggedInUser?._id, product: id }
@@ -170,21 +159,6 @@ export const ProductDetails = () => {
         }
     }
 
-    const [activeStep, setActiveStep] = React.useState(0);
-    const maxSteps = product?.images.length;
-
-    const handleNext = () => {
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-    };
-
-    const handleBack = () => {
-        setActiveStep((prevActiveStep) => prevActiveStep - 1);
-    };
-
-    const handleStepChange = (step) => {
-        setActiveStep(step);
-    };
-    
     return (
         <>
         {!(productFetchStatus === 'rejected' && reviewFetchStatus === 'rejected') && 
@@ -261,73 +235,28 @@ export const ProductDetails = () => {
                                                     width={'100%'} 
                                                     height={'100%'} 
                                                     axis={theme.direction === 'rtl' ? 'x-reverse' : 'x'} 
-                                                    index={activeStep} 
-                                                    onChangeIndex={handleStepChange} 
+                                                    index={0} 
                                                     enableMouseEvents
                                                 >
                                                     {
                                                         product?.images.map((image, index) => (
                                                             <div key={index} style={{ width: "100%", height: '100%' }}>
-                                                                {
-                                                                    Math.abs(activeStep - index) <= 2 
-                                                                    ?
-                                                                    <Box 
-                                                                        component="img" 
-                                                                        sx={{ 
-                                                                            width: '100%', 
-                                                                            objectFit: "contain", 
-                                                                            overflow: "hidden", 
-                                                                            aspectRatio: 1/1 
-                                                                        }} 
-                                                                        src={image} 
-                                                                        alt={product?.title} 
-                                                                    />
-                                                                    :
-                                                                    null
-                                                                }
+                                                                <Box 
+                                                                    component="img" 
+                                                                    sx={{ 
+                                                                        width: '100%', 
+                                                                        objectFit: "contain", 
+                                                                        overflow: "hidden", 
+                                                                        aspectRatio: 1/1 
+                                                                    }} 
+                                                                    src={image} 
+                                                                    alt={product?.title} 
+                                                                />
                                                             </div>
                                                         ))
                                                     }
                                                 </AutoPlaySwipeableViews>
                                             </Paper>
-
-                                            <MobileStepper 
-                                                sx={{
-                                                    background: sageGreen.light,
-                                                    borderRadius: '8px',
-                                                    '& .MuiMobileStepper-dot': {
-                                                        backgroundColor: '#d1d1d1'
-                                                    },
-                                                    '& .MuiMobileStepper-dotActive': {
-                                                        backgroundColor: sageGreen.dark
-                                                    }
-                                                }}
-                                                steps={maxSteps} 
-                                                position="static" 
-                                                activeStep={activeStep} 
-                                                nextButton={
-                                                    <Button 
-                                                        size="small" 
-                                                        onClick={handleNext} 
-                                                        disabled={activeStep === maxSteps - 1}
-                                                        sx={{ color: sageGreen.dark }}
-                                                    >
-                                                        Next
-                                                        {theme.direction === 'rtl' ? (<KeyboardArrowLeft />) : (<KeyboardArrowRight />)}
-                                                    </Button>
-                                                } 
-                                                backButton={
-                                                    <Button 
-                                                        size="small" 
-                                                        onClick={handleBack} 
-                                                        disabled={activeStep === 0}
-                                                        sx={{ color: sageGreen.dark }}
-                                                    >
-                                                        {theme.direction === 'rtl' ? (<KeyboardArrowRight />) : (<KeyboardArrowLeft />)}
-                                                        Back
-                                                    </Button>
-                                                }
-                                            />
                                         </Stack>
                                         :
                                         <Paper elevation={3} sx={{ borderRadius: '12px', overflow: 'hidden', padding: '12px' }}>
@@ -412,89 +341,10 @@ export const ProductDetails = () => {
                                     <hr style={{ borderColor: sageGreen.light }} />
                                 </Stack>
                                 
-                                {/* color, size and add-to-cart */}
+                                {/* quantity and add-to-cart */}
                                 {
                                     !loggedInUser?.isAdmin &&
                                     <Stack sx={{ rowGap: "1.3rem" }} width={'fit-content'}>
-                                        {/* colors */}
-                                        <Stack 
-                                            flexDirection={'row'} 
-                                            alignItems={'center'} 
-                                            columnGap={is387 ? '5px' : '1rem'} 
-                                            width={'fit-content'}
-                                        >
-                                            <Typography fontWeight={500}>Colors: </Typography>
-                                            <Stack flexDirection={'row'} columnGap={is387 ? ".5rem" : ".2rem"}>
-                                                {
-                                                    COLORS.map((color, index) => (
-                                                        <div 
-                                                            key={index}
-                                                            style={{ 
-                                                                backgroundColor: "white", 
-                                                                border: selectedColorIndex === index ? `2px solid ${sageGreen.main}` : "", 
-                                                                width: is340 ? "40px" : "50px", 
-                                                                height: is340 ? "40px" : "50px", 
-                                                                display: "flex", 
-                                                                justifyContent: "center", 
-                                                                alignItems: "center", 
-                                                                borderRadius: "100%", 
-                                                                padding: '2px'
-                                                            }}
-                                                        >
-                                                            <div 
-                                                                onClick={() => setSelectedColorIndex(index)} 
-                                                                style={{ 
-                                                                    width: "40px", 
-                                                                    height: "40px", 
-                                                                    border: color === '#F6F6F6' ? "1px solid grayText" : "", 
-                                                                    backgroundColor: color, 
-                                                                    borderRadius: "100%",
-                                                                    cursor: "pointer"
-                                                                }}
-                                                            ></div>
-                                                        </div>
-                                                    ))
-                                                }
-                                            </Stack>
-                                        </Stack>
-                                        
-                                        {/* size */}
-                                        <Stack 
-                                            flexDirection={'row'} 
-                                            alignItems={'center'} 
-                                            columnGap={is387 ? '5px' : '1rem'} 
-                                            width={'fit-content'}
-                                        >
-                                            <Typography fontWeight={500}>Size: </Typography>
-                                            <Stack flexDirection={'row'} columnGap={is387 ? ".5rem" : "1rem"}>
-                                                {
-                                                    SIZES.map((size) => (
-                                                        <motion.div 
-                                                            key={size}
-                                                            onClick={() => handleSizeSelect(size)} 
-                                                            whileHover={{ scale: 1.050 }} 
-                                                            whileTap={{ scale: 1 }} 
-                                                            style={{ 
-                                                                border: selectedSize === size ? "" : "1px solid grayText", 
-                                                                borderRadius: "8px", 
-                                                                width: "30px", 
-                                                                height: "30px", 
-                                                                display: "flex", 
-                                                                justifyContent: "center", 
-                                                                alignItems: "center", 
-                                                                cursor: "pointer", 
-                                                                padding: "1.2rem", 
-                                                                backgroundColor: selectedSize === size ? sageGreen.main : "whitesmoke", 
-                                                                color: selectedSize === size ? "white" : "" 
-                                                            }}
-                                                        >
-                                                            <p>{size}</p>
-                                                        </motion.div>
-                                                    ))
-                                                }
-                                            </Stack>
-                                        </Stack>
-
                                         {/* quantity, add to cart and wishlist */}
                                         <Stack 
                                             flexDirection={"row"} 
