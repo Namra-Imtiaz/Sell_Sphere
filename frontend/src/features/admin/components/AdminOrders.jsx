@@ -19,186 +19,195 @@ import Lottie from 'lottie-react'
 
 export const AdminOrders = () => {
 
-  const dispatch=useDispatch()
-  const orders=useSelector(selectOrders)
-  const [editIndex,setEditIndex]=useState(-1)
-  const orderUpdateStatus=useSelector(selectOrderUpdateStatus)
-  const theme=useTheme()
-  const is1620=useMediaQuery(theme.breakpoints.down(1620))
-  const is1200=useMediaQuery(theme.breakpoints.down(1200))
-  const is820=useMediaQuery(theme.breakpoints.down(820))
-  const is480=useMediaQuery(theme.breakpoints.down(480))
+  const dispatch = useDispatch()
+  const orders = useSelector(selectOrders)
+  const [editIndex, setEditIndex] = useState(-1)
+  const [selectedStatus, setSelectedStatus] = useState('')
+  const orderUpdateStatus = useSelector(selectOrderUpdateStatus)
+  const theme = useTheme()
+  const is1620 = useMediaQuery(theme.breakpoints.down(1620))
+  const is1200 = useMediaQuery(theme.breakpoints.down(1200))
+  const is820 = useMediaQuery(theme.breakpoints.down(820))
+  const is480 = useMediaQuery(theme.breakpoints.down(480))
 
-  const {register,handleSubmit,formState: { errors },} = useForm()
+  const { register, handleSubmit, formState: { errors }, reset } = useForm()
 
-  useEffect(()=>{
+  useEffect(() => {
     dispatch(getAllOrdersAsync())
-  },[dispatch])
+  }, [dispatch])
 
-
-  useEffect(()=>{
-    if(orderUpdateStatus==='fulfilled'){
-      toast.success("Status udpated")
+  useEffect(() => {
+    if (orderUpdateStatus === 'fulfilled') {
+      toast.success("Status updated")
+      // Refresh orders after successful update
+      dispatch(getAllOrdersAsync())
     }
-    else if(orderUpdateStatus==='rejected'){
+    else if (orderUpdateStatus === 'rejected') {
       toast.error("Error updating order status")
     }
-  },[orderUpdateStatus])
+  }, [orderUpdateStatus, dispatch])
 
-  useEffect(()=>{
-    return ()=>{
+  useEffect(() => {
+    return () => {
       dispatch(resetOrderUpdateStatus())
     }
-  },[])
+  }, [dispatch])
 
+  const handleStatusChange = (e) => {
+    setSelectedStatus(e.target.value)
+  }
 
-  const handleUpdateOrder=(data)=>{
-    const update={...data,_id:orders[editIndex]._id}
-    setEditIndex(-1)
+  const handleUpdateOrder = (index) => {
+    if (!selectedStatus) {
+      toast.error("Please select a status")
+      return
+    }
+
+    const update = {
+      status: selectedStatus,
+      _id: orders[index]._id
+    }
+    
     dispatch(updateOrderByIdAsync(update))
+    setEditIndex(-1)
+    setSelectedStatus('')
   }
 
-
-  const editOptions=['Pending','Dispatched','Out for delivery','Delivered','Cancelled']
-
-  const getStatusColor=(status)=>{
-    if(status==='Pending'){
-      return {bgcolor:'#dfc9f7',color:'#7c59a4'}
-    }
-    else if(status==='Dispatched'){
-      return {bgcolor:'#feed80',color:'#927b1e'}
-    }
-    else if(status==='Out for delivery'){
-      return {bgcolor:'#AACCFF',color:'#4793AA'}
-    }
-    else if(status==='Delivered'){
-      return {bgcolor:"#b3f5ca",color:"#548c6a"}
-    }
-    else if(status==='Cancelled'){
-      return {bgcolor:"#fac0c0",color:'#cc6d72'}
-    }
+  const handleEditClick = (index, currentStatus) => {
+    setEditIndex(index)
+    setSelectedStatus(currentStatus)
   }
 
+  const editOptions = ['Pending', 'Dispatched', 'Out for delivery', 'Delivered', 'Cancelled']
+
+  const getStatusColor = (status) => {
+    if (status === 'Pending') {
+      return { bgcolor: '#dfc9f7', color: '#7c59a4' }
+    }
+    else if (status === 'Dispatched') {
+      return { bgcolor: '#feed80', color: '#927b1e' }
+    }
+    else if (status === 'Out for delivery') {
+      return { bgcolor: '#AACCFF', color: '#4793AA' }
+    }
+    else if (status === 'Delivered') {
+      return { bgcolor: "#b3f5ca", color: "#548c6a" }
+    }
+    else if (status === 'Cancelled') {
+      return { bgcolor: "#fac0c0", color: '#cc6d72' }
+    }
+  }
 
   return (
-
     <Stack justifyContent={'center'} alignItems={'center'}>
-
-      <Stack mt={5} mb={3} component={'form'} noValidate onSubmit={handleSubmit(handleUpdateOrder)}>
-
+      <Stack mt={5} mb={3}>
         {
-          orders.length?
-          <TableContainer sx={{width:is1620?"95vw":"auto",overflowX:'auto'}} component={Paper} elevation={2}>
-            <Table aria-label="simple table">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Order</TableCell>
-                  <TableCell align="left">Id</TableCell>
-                  <TableCell align="left">Item</TableCell>
-                  <TableCell align="right">Total Amount</TableCell>
-                  <TableCell align="right">Shipping Address</TableCell>
-                  <TableCell align="right">Payment Method</TableCell>
-                  <TableCell align="right">Order Date</TableCell>
-                  <TableCell align="right">Status</TableCell>
-                  <TableCell align="right">Actions</TableCell>
-                </TableRow>
-              </TableHead>
-
-              <TableBody>
-
-                {
-                orders.length && orders.map((order,index) => (
-
-                  <TableRow key={order._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
-
-                    <TableCell component="th" scope="row">{index}</TableCell>
-                    <TableCell align="right">{order._id}</TableCell>
-                    <TableCell align="right">
-                      {
-                        order.item.map((product)=>(
-                          <Stack mt={2} flexDirection={'row'} alignItems={'center'} columnGap={2}>
-                            <Avatar src={product.product.thumbnail}></Avatar>
-                            <Typography>{product.product.title}</Typography>
-                          </Stack>
-                        ))
-                      }
-                    </TableCell>
-                    <TableCell align="right">{order.total}</TableCell>
-                    <TableCell align="right">
-                      <Stack>
-                        <Typography>{order.address[0].street}</Typography>
-                        <Typography>{order.address[0].city}</Typography>
-                        <Typography>{order.address[0].state}</Typography>
-                        <Typography>{order.address[0].postalCode}</Typography>
-                      </Stack>
-                    </TableCell>
-                    <TableCell align="right">{order.paymentMode}</TableCell>
-                    <TableCell align="right">{new Date(order.createdAt).toDateString()}</TableCell>
-
-                    {/* order status */}
-                    <TableCell align="right">
-
-                        {
-                          editIndex===index?(
-
-                        <FormControl fullWidth>
-                          <InputLabel id="demo-simple-select-label">Update status</InputLabel>
-                          <Select
-                            defaultValue={order.status}
-                            labelId="demo-simple-select-label"
-                            id="demo-simple-select"
-                            label="Update status"
-                            {...register('status',{required:'Status is required'})}
-                            >
-                            
-                            {
-                              editOptions.map((option)=>(
-                                <MenuItem value={option}>{option}</MenuItem>
-                              ))
-                            }
-                          </Select>
-                        </FormControl>
-                        ):<Chip label={order.status} sx={getStatusColor(order.status)}/>
-                        }
-                      
-                    </TableCell>
-
-                    {/* actions */}
-                    <TableCell align="right">
-
-                      {
-                        editIndex===index?(
-                          <Button>
-
-                            <IconButton type='submit'><CheckCircleOutlinedIcon/></IconButton>
-                          </Button>
-                        )
-                        :
-                        <IconButton onClick={()=>setEditIndex(index)}><EditOutlinedIcon/></IconButton>
-                      }
-
-                    </TableCell>
-
+          orders.length ?
+            <TableContainer sx={{ width: is1620 ? "95vw" : "auto", overflowX: 'auto' }} component={Paper} elevation={2}>
+              <Table aria-label="simple table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Order</TableCell>
+                    <TableCell align="left">Id</TableCell>
+                    <TableCell align="left">Item</TableCell>
+                    <TableCell align="right">Total Amount</TableCell>
+                    <TableCell align="right">Shipping Address</TableCell>
+                    <TableCell align="right">Payment Method</TableCell>
+                    <TableCell align="right">Order Date</TableCell>
+                    <TableCell align="right">Status</TableCell>
+                    <TableCell align="right">Actions</TableCell>
                   </TableRow>
-                ))}
+                </TableHead>
 
-              </TableBody>
-            </Table>
-          </TableContainer>
-          :
-          <Stack width={is480?"auto":'30rem'} justifyContent={'center'}>
+                <TableBody>
+                  {
+                    orders.map((order, index) => (
+                      <TableRow key={order._id} sx={{ '&:last-child td, &:last-child th': { border: 0 } }}>
+                        <TableCell component="th" scope="row">{index}</TableCell>
+                        <TableCell align="right">{order._id}</TableCell>
+                        <TableCell align="right">
+                          {
+                            order.item.map((product) => (
+                              <Stack key={product.product._id} mt={2} flexDirection={'row'} alignItems={'center'} columnGap={2}>
+                                <Avatar src={product.product.thumbnail}></Avatar>
+                                <Typography>{product.product.title}</Typography>
+                              </Stack>
+                            ))
+                          }
+                        </TableCell>
+                        <TableCell align="right">{order.total}</TableCell>
+                        <TableCell align="right">
+                          <Stack>
+                            {
+                              order.address?.[0] ? (
+                                <>
+                                  <Typography>{order.address[0].street}</Typography>
+                                  <Typography>{order.address[0].city}</Typography>
+                                  <Typography>{order.address[0].state}</Typography>
+                                  <Typography>{order.address[0].postalCode}</Typography>
+                                </>
+                              ) : (
+                                <Typography color="text.secondary">No address info</Typography>
+                              )
+                            }
+                          </Stack>
+                        </TableCell>
+                        <TableCell align="right">{order.paymentMode}</TableCell>
+                        <TableCell align="right">{new Date(order.createdAt).toDateString()}</TableCell>
 
-            <Stack rowGap={'1rem'}>
-                <Lottie animationData={noOrdersAnimation}/>
+                        {/* order status */}
+                        <TableCell align="right">
+                          {
+                            editIndex === index ? (
+                              <FormControl fullWidth>
+                                <InputLabel id="status-select-label">Status</InputLabel>
+                                <Select
+                                  labelId="status-select-label"
+                                  id="status-select"
+                                  value={selectedStatus}
+                                  label="Status"
+                                  onChange={handleStatusChange}
+                                >
+                                  {
+                                    editOptions.map((option) => (
+                                      <MenuItem key={option} value={option}>{option}</MenuItem>
+                                    ))
+                                  }
+                                </Select>
+                              </FormControl>
+                            ) : <Chip label={order.status} sx={getStatusColor(order.status)} />
+                          }
+                        </TableCell>
+
+                        {/* actions */}
+                        <TableCell align="right">
+                          {
+                            editIndex === index ? (
+                              <IconButton onClick={() => handleUpdateOrder(index)}>
+                                <CheckCircleOutlinedIcon />
+                              </IconButton>
+                            ) : (
+                              <IconButton onClick={() => handleEditClick(index, order.status)}>
+                                <EditOutlinedIcon />
+                              </IconButton>
+                            )
+                          }
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  }
+                </TableBody>
+              </Table>
+            </TableContainer>
+            :
+            <Stack width={is480 ? "auto" : '30rem'} justifyContent={'center'}>
+              <Stack rowGap={'1rem'}>
+                <Lottie animationData={noOrdersAnimation} />
                 <Typography textAlign={'center'} alignSelf={'center'} variant='h6' fontWeight={400}>There are no orders currently</Typography>
+              </Stack>
             </Stack>
-              
-
-          </Stack>  
         }
-    
-    </Stack>
-    
+      </Stack>
     </Stack>
   )
 }

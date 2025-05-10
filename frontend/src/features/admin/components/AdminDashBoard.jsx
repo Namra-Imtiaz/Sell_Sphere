@@ -16,11 +16,16 @@ import { Link } from 'react-router-dom';
 import {motion} from 'framer-motion'
 import ClearIcon from '@mui/icons-material/Clear';
 import { ITEMS_PER_PAGE } from '../../../constants';
+import { AdminDashboardStats } from './AdminDashboardStats';
+import { AdminDashboardCharts } from './AdminDashboardCharts';
+import { Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle } from '@mui/material';
+import { getAllOrdersAsync, selectOrders } from '../../order/OrderSlice';
 
 const sortOptions=[
     {name:"Price: low to high",sort:"price",order:"asc"},
     {name:"Price: high to low",sort:"price",order:"desc"},
 ]
+
 
 export const AdminDashBoard = () => {
 
@@ -30,6 +35,7 @@ export const AdminDashBoard = () => {
     const [sort,setSort]=useState(null)
     const [page,setPage]=useState(1)
     const products=useSelector(selectProducts)
+    const orders=useSelector(selectOrders) || []
     const dispatch=useDispatch()
     const theme=useTheme()
     const is500=useMediaQuery(theme.breakpoints.down(500))
@@ -42,6 +48,7 @@ export const AdminDashBoard = () => {
     const is600=useMediaQuery(theme.breakpoints.down(600))
     const is488=useMediaQuery(theme.breakpoints.down(488))
 
+    
     useEffect(()=>{
         setPage(1)
     },[totalResults])
@@ -54,10 +61,40 @@ export const AdminDashBoard = () => {
 
         dispatch(fetchProductsAsync(finalFilters))
         
+        // Fetch orders on component mount and periodically
+        dispatch(getAllOrdersAsync())
     },[filters,sort,page])
 
-    const handleBrandFilters=(e)=>{
+    const [dashboardStats, setDashboardStats] = useState({
+      totalOrders: 0,
+      totalProducts: 0,
+      pendingOrders: 0,
+      totalRevenue: 0
+    });
 
+    useEffect(() => {
+  // Calculate real stats from orders and products
+  const pendingOrders = orders.filter(order => order.status === 'Pending').length;
+  const totalRevenue = orders.reduce((sum, order) => sum + (order.total || 0), 0);
+
+  setDashboardStats({
+    totalOrders: orders.length,
+    pendingOrders: pendingOrders,
+    totalRevenue: totalRevenue || 12589 // Fallback to default if no orders yet
+  });
+}, [orders]);
+
+    // Set up periodic refresh of orders
+    useEffect(() => {
+      // Refresh orders data every minute
+      const interval = setInterval(() => {
+        dispatch(getAllOrdersAsync());
+      }, 60000);
+      
+      return () => clearInterval(interval);
+    }, [dispatch]);
+
+    const handleBrandFilters=(e)=>{
         const filterSet=new Set(filters.brand)
 
         if(e.target.checked){filterSet.add(e.target.value)}
@@ -91,14 +128,13 @@ export const AdminDashBoard = () => {
 
   return (
     <>
-
     <motion.div style={{position:"fixed",backgroundColor:"white",height:"100vh",padding:'1rem',overflowY:"scroll",width:is500?"100vw":"30rem",zIndex:500}}  variants={{show:{left:0},hide:{left:-500}}} initial={'hide'} transition={{ease:"easeInOut",duration:.7,type:"spring"}} animate={isProductFilterOpen===true?"show":"hide"}>
 
         {/* fitlers section */}
         <Stack mb={'5rem'}  sx={{scrollBehavior:"smooth",overflowY:"scroll"}}>
 
         
-            <Typography variant='h4'>New Arrivals</Typography>
+            <Typography variant='h4'>Admin Filters</Typography>
 
 
                 <IconButton onClick={handleFilterClose} style={{position:"absolute",top:15,right:15}}>
@@ -109,11 +145,11 @@ export const AdminDashBoard = () => {
 
 
         <Stack rowGap={2} mt={4} >
-            <Typography sx={{cursor:"pointer"}} variant='body2'>Totes</Typography>
-            <Typography sx={{cursor:"pointer"}} variant='body2'>Backpacks</Typography>
-            <Typography sx={{cursor:"pointer"}} variant='body2'>Travel Bags</Typography>
-            <Typography sx={{cursor:"pointer"}} variant='body2'>Hip Bags</Typography>
-            <Typography sx={{cursor:"pointer"}} variant='body2'>Laptop Sleeves</Typography>
+            <Typography sx={{cursor:"pointer"}} variant='body2'>All Products</Typography>
+            <Typography sx={{cursor:"pointer"}} variant='body2'>Low Stock Items</Typography>
+            <Typography sx={{cursor:"pointer"}} variant='body2'>Out of Stock Items</Typography>
+            <Typography sx={{cursor:"pointer"}} variant='body2'>Discounted Items</Typography>
+            <Typography sx={{cursor:"pointer"}} variant='body2'>Best Sellers</Typography>
         </Stack>
 
         {/* brand filters */}
@@ -161,10 +197,22 @@ export const AdminDashBoard = () => {
 
     </motion.div>
 
-    <Stack rowGap={5} mt={is600?2:5} mb={'3rem'}>
+    <Stack rowGap={5} mt={is600?2:5} mb={'3rem'} mx={3}>
+        <Typography variant="h4" gutterBottom component="div">
+          Admin Dashboard
+        </Typography>
+
+        {/* Stats Section - pass current order data to stats component */}
+        <AdminDashboardStats stats={dashboardStats} />
+        
+        {/* Charts Section - now gets data from redux store */}
+        <AdminDashboardCharts />
 
         {/* sort options */}
-        <Stack flexDirection={'row'} mr={'2rem'} justifyContent={'flex-end'} alignItems={'center'} columnGap={5}>
+        <Stack flexDirection={'row'} mr={'2rem'} justifyContent={'space-between'} alignItems={'center'} columnGap={5}>
+            <Typography variant="h5" component="div">
+              Product Management
+            </Typography>
 
             <Stack alignSelf={'flex-end'} width={'12rem'}>
                 <FormControl fullWidth>
@@ -185,7 +233,6 @@ export const AdminDashBoard = () => {
                         </Select>
                 </FormControl>
             </Stack>
-
         </Stack>
      
         <Grid gap={2} container flex={1} justifyContent={'center'} alignContent={"center"}>
