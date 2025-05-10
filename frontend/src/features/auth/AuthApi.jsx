@@ -8,14 +8,15 @@ export const signup=async(cred)=>{
         throw error.response.data
     }
 }
-export const login=async(cred)=>{
+export const login = async (cred) => {
     try {
-        const res=await axiosi.post("auth/login",cred)
-        return res.data
+      const res = await axiosi.post("auth/login", cred)
+      return res.data
     } catch (error) {
-        throw error.response.data
+      throw error.response?.data || { message: "Login failed. Please try again." }
     }
-}
+  }
+  
 export const verifyOtp=async(cred)=>{
     try {
         const res=await axiosi.post("auth/verify-otp",cred)
