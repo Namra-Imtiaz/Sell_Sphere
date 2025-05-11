@@ -1,4 +1,4 @@
-## Sell-SPhere: 
+## Sell-Sphere: 
 
 **MERN Ecommerce** This full-stack application is built to support local artists and promote their businesses, while offering users the ability to shop for handcrafted materials. Developed with the MERN stack (MongoDB, Express.js, React, Node.js), it incorporates Redux Toolkit for efficient state management and Material UI for a modern, user-friendly interface. Designed for both users and administrators, the platform provides a robust and feature-rich environment, ensuring seamless and efficient interactions.
 
@@ -23,7 +23,7 @@
   - Add products, adjust quantities, and view subtotals.
 
  **Place order:**
-  - Place order , Pay Ammount 
+  - Place order , Pay Amount 
 
 ### **Admin:**
 
