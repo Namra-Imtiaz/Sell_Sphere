@@ -22,7 +22,7 @@ const orderSchema=new Schema({
     },
     paymentMode:{
         type:String,
-        enum:['COD','UPI','CARD'],
+        enum:['COD','UPI','CARD', 'SANDBOX'],
         required:true
     },
     total:{
